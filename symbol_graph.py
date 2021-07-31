@@ -39,26 +39,28 @@ def to_digraph(objfile: Path, demangle: Demangler, triple: str) -> nx.DiGraph:
 def main():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('object')
+    parser.add_argument('object', type=argparse.FileType('r'), metavar='OBJFILE', help='object file')
+    parser.add_argument('--dom-tree', type=str, metavar='SYMBOL', help='compute dominator tree')
+    parser.add_argument('--triple', type=str, default='', metavar='TRIPLE', help='target toolchain platform prefix')
     args = parser.parse_args()
 
-    triple = 'arm-none-eabi-'
     demangle = demangle_rust
 
-    to_dot(args.object, demangle, triple)
-    gr = to_digraph(args.object, demandle, triple)
+    to_dot(args.object.name, demangle, triple=args.triple)
 
-    n0 = 'Reset'
-    dom_tree = dominator_tree(gr, n0)
-    from matplotlib import pyplot as pl
-    pl.figure(figsize=(10,10))
-    nx.draw_networkx(
-        dom_tree,
-        pos=nx.spring_layout(dom_tree, iterations=500, k=20/math.sqrt(len(dom_tree.nodes))),
-        edge_color='0.8',
-        font_size=2,
-        )
-    pl.savefig('hi.svg')
+    if args.dom_tree is not None:
+        gr = to_digraph(args.object.name, demangle, triple=args.triple)
+        n0 = args.dom_tree
+        dom_tree = dominator_tree(gr, n0)
+        from matplotlib import pyplot as pl
+        pl.figure(figsize=(10,10))
+        nx.draw_networkx(
+            dom_tree,
+            pos=nx.spring_layout(dom_tree, iterations=500, k=20/math.sqrt(len(dom_tree.nodes))),
+            edge_color='0.8',
+            font_size=2,
+            )
+        pl.savefig('dom-tree.svg')
 
 def dominator_tree(gr, n0):
     doms = nx.algorithms.dominance.immediate_dominators(gr, n0)
