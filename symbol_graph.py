@@ -57,10 +57,10 @@ def main():
         pl.figure(figsize=(10,10))
         nx.draw_networkx(
             dom_tree,
-            pos=nx.spring_layout(dom_tree, iterations=1000, k=5),
+            pos=nx.spring_layout(dom_tree, iterations=1000, threshold=1e-5, k=5),
             edge_color='0.8',
             nodelist = [ n for n in dom_tree.nodes ],
-            node_size = [ 100*gr.nodes[n]['size'] / max_size for n in dom_tree.nodes ],
+            node_size = [ 200*gr.nodes[n]['size'] / max_size for n in dom_tree.nodes ],
             font_size=2,
             )
         pl.savefig('dom-tree.svg')
