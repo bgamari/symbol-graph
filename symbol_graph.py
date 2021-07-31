@@ -56,7 +56,7 @@ def main():
         pl.figure(figsize=(10,10))
         nx.draw_networkx(
             dom_tree,
-            pos=nx.spring_layout(dom_tree, iterations=500, k=20/math.sqrt(len(dom_tree.nodes))),
+            pos=nx.spring_layout(dom_tree, iterations=1000, k=5),
             edge_color='0.8',
             font_size=2,
             )
