@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import subprocess
-from typing import Dict, Iterator, NewType, Tuple, Callable
+from typing import Dict, Iterator, NewType, Tuple, Callable, List
 from pathlib import Path
 import networkx as nx
 import math
@@ -9,16 +9,22 @@ import math
 Symbol = NewType('Symbol', str)
 Demangler = Callable[[Symbol], Symbol]
 
-def to_dot(objfile: Path, demangle: Demangler, triple):
+def to_dot(objects: List[Path], demangle: Demangler, triple):
     print('digraph {')
-    for src, dest in symbol_ref_edges(objfile, triple):
-        src = encode_symbol(demangle(src))
-        dest = encode_symbol(demangle(dest))
-        print(f'  "{src}" -> "{dest}";')
+    for obj in objects:
+        print('')
+        print(f'  // {obj}')
+        for src, dest in symbol_ref_edges(obj, triple):
+            src = encode_symbol(demangle(src))
+            dest = encode_symbol(demangle(dest))
+            print(f'  "{src}" -> "{dest}";')
 
-    for sym, size in symbol_sizes(objfile, triple).items():
-        sym = encode_symbol(demangle(sym))
-        print(f'  "{sym}" [size={size} label="{sym}\\n{size} bytes"];')
+    for obj in objects:
+        print('')
+        print(f'  // {obj}');
+        for sym, size in symbol_sizes(obj, triple).items():
+            sym = encode_symbol(demangle(sym))
+            print(f'  "{sym}" [size={size} label="{sym}\\n{size} bytes"];')
 
     print('}')
 
@@ -39,14 +45,14 @@ def to_digraph(objfile: Path, demangle: Demangler, triple: str) -> nx.DiGraph:
 def main():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('object', type=argparse.FileType('r'), metavar='OBJFILE', help='object file')
+    parser.add_argument('object', type=argparse.FileType('r'), metavar='OBJFILE', help='object file', nargs='+')
     parser.add_argument('--dom-tree', type=str, metavar='SYMBOL', help='compute dominator tree')
     parser.add_argument('--triple', type=str, default='', metavar='TRIPLE', help='target toolchain platform prefix')
     args = parser.parse_args()
 
     demangle = demangle_rust
 
-    to_dot(args.object.name, demangle, triple=args.triple)
+    to_dot([obj.name for obj in args.object], demangle, triple=args.triple)
 
     if args.dom_tree is not None:
         gr = to_digraph(args.object.name, demangle, triple=args.triple)
